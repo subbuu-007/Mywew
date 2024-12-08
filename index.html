@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Summarizer</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>YouTube Summarizer</h1>
+        <p>Quickly summarize YouTube videos</p>
+    </header>
+
+    <main>
+        <section class="card">
+            <h2>Summarize a YouTube Video</h2>
+            <div class="input-group">
+                <input type="url" id="video-url" placeholder="Enter YouTube URL" required>
+                <button id="fetch-btn">Fetch Transcript</button>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Transcript</h2>
+            <div id="transcript-output">Transcript will appear here...</div>
+        </section>
+
+        <section class="card">
+            <h2>Generate Summary</h2>
+            <label for="summary-length">Summary Length:</label>
+            <select id="summary-length">
+                <option value="short">Short</option>
+                <option value="medium" selected>Medium</option>
+                <option value="long">Long</option>
+            </select>
+            <button id="generate-btn">Generate Summary</button>
+        </section>
+
+        <section class="card">
+            <h2>Summary</h2>
+            <div id="summary-output">Summary will appear here...</div>
+            <button id="download-txt">Download TXT</button>
+            <button id="download-pdf">Download PDF</button>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 YouTube Summarizer</p>
+    </footer>
+
+    <script>
+        const fetchBtn = document.getElementById('fetch-btn');
+        const generateBtn = document.getElementById('generate-btn');
+        const downloadTxtBtn = document.getElementById('download-txt');
+        const downloadPdfBtn = document.getElementById('download-pdf');
+        const transcriptOutput = document.getElementById('transcript-output');
+        const summaryOutput = document.getElementById('summary-output');
+
+        let transcript = '';
+        let summary = '';
+
+        fetchBtn.addEventListener('click', async () => {
+            const videoUrl = document.getElementById('video-url').value;
+            const response = await fetch('/fetch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: videoUrl }),
+            });
+            const data = await response.json();
+            if (data.transcript) {
+                transcript = data.transcript;
+                transcriptOutput.textContent = transcript;
+            } else {
+                transcriptOutput.textContent = 'Error fetching transcript.';
+            }
+        });
+
+        generateBtn.addEventListener('click', async () => {
+            const length = document.getElementById('summary-length').value;
+            const response = await fetch('/summarize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: transcript, length }),
+            });
+            const data = await response.json();
+            if (data.summary) {
+                summary = data.summary;
+                summaryOutput.textContent = summary;
+            } else {
+                summaryOutput.textContent = 'Error generating summary.';
+            }
+        });
+
+        downloadTxtBtn.addEventListener('click', () => {
+            window.location.href = `/download?summary=${encodeURIComponent(summary)}&format=txt`;
+        });
+
+        downloadPdfBtn.addEventListener('click', () => {
+            window.location.href = `/download?summary=${encodeURIComponent(summary)}&format=pdf`;
+        });
+    </script>
+</body>
+</html>
